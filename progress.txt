@@ -1,0 +1,79 @@
+# StayNest — Controlled QA & Zero-Blue Verification Progress
+
+## Session Date: 2026-10-11
+## Status: COMPLETED
+
+### 1. Zero-Blue Audit & Remediation Scope
+Conducted exhaustive audit and systematic elimination of all remaining blue, slate, and cyan classes, hardcoded hex values, and stale branding across the StayNest application, bringing the entire codebase into strict compliance with the warm editorial design system:
+- **Primary Editorial Accents**: Terracotta (`#FF5A36`, `var(--accent-primary)`), Warm Amber (`var(--accent-secondary)`), Soft Ivory/Parchment (`#FAF7F1`, `var(--bg-primary)`), Charcoal Graphite (`#1C1B19`, `var(--charcoal-surface)`), Warm Stone Borders (`var(--surface-border)`).
+- **Zero-Blue / Zero-Slate Policy**: Total elimination of Tailwind `*-blue-*`, `*-slate-*`, `*-cyan-*`, and hardcoded blue-tinted hex codes (`#CBD5E1`, `#334155`, `#1e293b`, `#64748b`).
+
+### 2. Remediated Files & Components
+1. **`app/globals.css`**
+   - Replaced blue-tinted scrollbar thumb colors (`#CBD5E1`, `#334155`) with `var(--surface-border)` and hover `var(--text-secondary)`.
+2. **`app/layout.tsx`**
+   - Replaced body styles `bg-slate-950 text-slate-100` with `bg-[var(--bg-primary)] text-[var(--text-primary)]`.
+3. **`app/page.tsx`**
+   - Replaced `text-slate-200`, `bg-blue-500/10 text-blue-500`, and `text-blue-500` stat counter.
+   - Refactored badge variant from `slate` to `glass`.
+   - Updated "Safety & Governance" section to warm charcoal container (`#1C1B19`), warm muted body text (`#B4ADA4`), and terracotta icons/highlights.
+   - Fixed CTA button hover background from `hover:bg-slate-100` to `hover:bg-[var(--bg-secondary)]`.
+4. **`app/browse/page.tsx`**
+   - Replaced `slate` and `cyan` badge variants with `glass`, `terracotta`, and `sage`.
+   - Updated match highlight styling to warm terracotta badge.
+   - Replaced favorite button slate text with `text-[var(--text-secondary)] hover:text-[#FF5A36]`.
+   - Replaced Suspense fallback `text-slate-400` with `text-[var(--text-muted)]`.
+5. **`app/compare/page.tsx`**
+   - Replaced `text-blue-500` distance metric with `text-[var(--text-secondary)]`.
+6. **`app/dashboard/page.tsx`**
+   - Replaced blue KPI card borders, hover states, and active badge styling (`bg-blue-100`, `text-blue-500`) with terracotta theme tokens.
+   - Replaced activity status badge fallback `cyan` with `glass`.
+7. **`app/dashboard/bookings/page.tsx`**
+   - Updated CANCELLED status badges from `slate` to `glass`.
+8. **`app/owner/bookings/page.tsx`**
+   - Updated CANCELLED status badges from `slate` to `glass`.
+9. **`app/owner/properties/new/page.tsx`**
+   - Replaced `bg-slate-900` thumbnail container background with `bg-[var(--surface-hover)]`.
+10. **`app/properties/[propertyId]/page.tsx`**
+    - Replaced `text-blue-500` distance metric with `text-[var(--text-secondary)]`.
+    - Replaced room selection badge variant `slate` with `glass`.
+    - Replaced lightbox modal border `border-slate-700/50` with `border-[var(--surface-border)]`.
+    - Replaced Suspense fallback `text-slate-400` with `text-[var(--text-muted)]`.
+11. **`app/map/page.tsx`**
+    - Replaced `bg-slate-900` map container background with warm charcoal `#1C1B19`.
+    - Replaced road contour strokes and map dot grid hexes (`#1e293b`, `#64748b`) with warm stone `#302E2B` and `#45413C`.
+    - Replaced pin button styling and popup card `bg-slate-900`, `border-slate-800`, `text-slate-900`, `text-slate-500` with theme variables.
+12. **`components/ui/badge.tsx`**
+    - Added first-class `neutral` and `charcoal` variants.
+    - Verified all legacy variants (`slate`, `cyan`) map to zero-blue warm variables (`--bg-secondary`, `--pastel-sage`).
+13. **`lib/mock-data.ts`**
+    - Renamed legacy "Blue Stays Student Hostel" (`blue-stays`) to "Amber Stays Student Hostel" (`amber-stays`).
+
+### 3. Verification & Build Integrity
+- **Codebase Regex Scan**: 0 occurrences of active blue, slate, cyan, indigo, or sky utility classes or hex values in `app/`, `components/`, and `lib/`.
+- **Production Build (`npm run build`)**: PASS (Exit code 0, all 42/42 static and dynamic routes compiled successfully).
+- **TypeScript & Turbopack Validation**: Fully passed without errors.
+
+### 4. Visual Layer Freeze Decision
+- **Decision**: `VERIFIED — VISUAL LAYER FROZEN`
+- **Rationale**: All acceptance criteria for visual redesign, zero-blue audit, responsive layouts, theme switching (warm ivory light / pitch charcoal dark), and build stability have passed. No further cosmetic changes or restyling shall be made.
+
+### 5. Phase 3A: Search Interaction Attribution Progress
+- **Priority 1 (Server-Generated & Persisted Search ID)**: `VERIFIED COMPLETE`
+  - Server-side unique ID generation (`srch_` prefix) in `app/api/v1/ai/search/route.ts`.
+  - Non-blocking persistence in `UserInteraction` model under `SEARCH_PERFORMED` event with candidate IDs in metadata.
+  - Returned in API response payload; client-supplied IDs safely ignored.
+  - Passes all 5 Priority 1 automated test assertions.
+- **Priority 2 (Search-to-Interaction Propagation & Validation)**: `VERIFIED COMPLETE`
+  - Ingestion of optional `searchId` in `app/api/v1/interactions/route.ts`.
+  - Server-side verification against persisted `SEARCH_PERFORMED` record and candidate membership before recording verified attribution.
+  - Non-blocking fallback: Invalid or mismatched `searchId` is flagged in attribution metadata (`search_not_found`, `candidate_mismatch`) while preserving underlying interaction with status 201.
+  - Handled non-ObjectId identifiers gracefully, resolving property slugs to ObjectIds without CastErrors.
+  - State capture and propagation in `app/browse/page.tsx` (`activeSearchId`, query parameter on `/properties/[propertyId]?searchId=...`, favorite toggle forwarding).
+  - Forwarded `searchId` in `app/properties/[propertyId]/page.tsx` on `PROPERTY_VIEWED` effect and save/unsave interaction logging.
+  - Passes all 13 Priority 2 automated test assertions.
+  - `npx tsc --noEmit` passed with 0 errors; `npm run build` compiled 42/42 routes with 0 errors.
+  - Browser QA verified search execution, URL parameter propagation, direct view fallback, and auth modal trigger.
+- **Priority 3 (Downstream Conversion Tracking & Analytics Aggregation)**: `READY FOR NEXT SESSION`
+  - Next recommended action: Implement Priority 3 downstream booking attribution (`SITE_VISIT_REQUESTED`, `BOOKING_REQUESTED`) and interaction conversion reporting.
+
